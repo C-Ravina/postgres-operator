@@ -21,6 +21,8 @@ bash "${CODEGEN_PKG}/generate-groups.sh" client,deepcopy,informer,lister \
   --go-header-file "${SCRIPT_ROOT}"/hack/custom-boilerplate.go.txt \
   -o ./
 
+echo $TARGET_CODE_DIR
+echo $OPERATOR_PACKAGE_ROOT
 cp -r "${OPERATOR_PACKAGE_ROOT}"/pkg/* "${TARGET_CODE_DIR}"
 
 cleanup

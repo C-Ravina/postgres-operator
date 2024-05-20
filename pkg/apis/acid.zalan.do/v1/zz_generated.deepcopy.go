@@ -272,11 +272,6 @@ func (in *KubernetesMetaConfiguration) DeepCopyInto(out *KubernetesMetaConfigura
 			(*out)[key] = val
 		}
 	}
-	if in.EnableSecretsDeletion != nil {
-		in, out := &in.EnableSecretsDeletion, &out.EnableSecretsDeletion
-		*out = new(bool)
-		**out = **in
-	}
 	if in.EnablePersistentVolumeClaimDeletion != nil {
 		in, out := &in.EnablePersistentVolumeClaimDeletion, &out.EnablePersistentVolumeClaimDeletion
 		*out = new(bool)

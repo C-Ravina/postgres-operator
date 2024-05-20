@@ -81,3 +81,4 @@ func (c *Controller) preparePodEventForDispatch(curPod, prevPod *v1.Pod, event c
 
 	c.dispatchPodEvent(c.podClusterName(curPod), podEvent)
 }
+

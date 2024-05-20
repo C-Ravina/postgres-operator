@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=registry.opensource.zalan.do/library/alpine-3:latest
+ARG BASE_IMAGE=alpine:latest
 ARG VERSION=latest
 
 FROM ubuntu:20.04 as builder
@@ -9,7 +9,7 @@ COPY  . /go/src/github.com/zalando/postgres-operator
 WORKDIR /go/src/github.com/zalando/postgres-operator
 
 ENV OPERATOR_LDFLAGS="-X=main.version=${VERSION}"
-RUN bash docker/build_operator.sh
+#RUN bash docker/build_operator.sh
 
 FROM ${BASE_IMAGE}
 LABEL maintainer="Team ACID @ Zalando <team-acid@zalando.de>"

@@ -2,11 +2,11 @@ package k8sutil
 
 import (
 	"context"
-	"fmt"
-	"reflect"
-
 	b64 "encoding/base64"
 	"encoding/json"
+	"fmt"
+	"github.com/davecgh/go-spew/spew"
+	"reflect"
 
 	clientbatchv1 "k8s.io/client-go/kubernetes/typed/batch/v1"
 
@@ -186,14 +186,20 @@ func NewFromConfig(cfg *rest.Config) (KubernetesClient, error) {
 }
 
 // SetPostgresCRDStatus of Postgres cluster
-func (client *KubernetesClient) SetPostgresCRDStatus(clusterName spec.NamespacedName, status string) (*apiacidv1.Postgresql, error) {
+func (client *KubernetesClient) SetPostgresCRDStatus(clusterName spec.NamespacedName, status string, numberOfInstances int32, labelSelector string) (*apiacidv1.Postgresql, error) {
 	var pg *apiacidv1.Postgresql
-	var pgStatus apiacidv1.PostgresStatus
+	pgStatus := apiacidv1.PostgresStatus{}
 	pgStatus.PostgresClusterStatus = status
+	pgStatus.NumberOfInstances = numberOfInstances
+	pgStatus.LabelSelector = labelSelector
+
+	spew.Dump(pgStatus)
+	//fmt.Printf(" %+v \n", pgStatus)
 
 	patch, err := json.Marshal(struct {
 		PgStatus interface{} `json:"status"`
 	}{&pgStatus})
+	fmt.Printf("patch: %s\n", string(patch))
 
 	if err != nil {
 		return pg, fmt.Errorf("could not marshal status: %v", err)
@@ -466,3 +472,4 @@ func ClientMissingObjects() KubernetesClient {
 		ServicesGetter:    &MockServiceNotExistGetter{},
 	}
 }
+

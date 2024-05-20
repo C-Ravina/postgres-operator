@@ -259,11 +259,13 @@ func (c *Cluster) Create() (err error) {
 			pgUpdatedStatus *acidv1.Postgresql
 			errStatus       error
 		)
+
+		labelstring := fmt.Sprintf("%s=%s", "cluster-name", c.Postgresql.ObjectMeta.Labels["cluster-name"]) //labeladd
 		if err == nil {
-			pgUpdatedStatus, errStatus = c.KubeClient.SetPostgresCRDStatus(c.clusterName(), acidv1.ClusterStatusRunning) //TODO: are you sure it's running?
+			pgUpdatedStatus, errStatus = c.KubeClient.SetPostgresCRDStatus(c.clusterName(), acidv1.ClusterStatusRunning, c.Postgresql.Spec.NumberOfInstances, labelstring) //TODO: are you sure it's running? //labeledit //credit
 		} else {
 			c.logger.Warningf("cluster created failed: %v", err)
-			pgUpdatedStatus, errStatus = c.KubeClient.SetPostgresCRDStatus(c.clusterName(), acidv1.ClusterStatusAddFailed)
+			pgUpdatedStatus, errStatus = c.KubeClient.SetPostgresCRDStatus(c.clusterName(), acidv1.ClusterStatusAddFailed, 0, labelstring)  //labeledit //credit
 		}
 		if errStatus != nil {
 			c.logger.Warningf("could not set cluster status: %v", errStatus)
@@ -272,8 +274,9 @@ func (c *Cluster) Create() (err error) {
 			c.setSpec(pgUpdatedStatus)
 		}
 	}()
-
-	pgCreateStatus, err = c.KubeClient.SetPostgresCRDStatus(c.clusterName(), acidv1.ClusterStatusCreating)
+        
+	labelstring := fmt.Sprintf("%s=%s", "cluster-name", c.Postgresql.ObjectMeta.Labels["cluster-name"]) //labeladd
+	pgCreateStatus, err = c.KubeClient.SetPostgresCRDStatus(c.clusterName(), acidv1.ClusterStatusCreating, 0, labelstring) //labeledit //credit
 	if err != nil {
 		return fmt.Errorf("could not set cluster status: %v", err)
 	}
@@ -888,7 +891,8 @@ func (c *Cluster) Update(oldSpec, newSpec *acidv1.Postgresql) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	c.KubeClient.SetPostgresCRDStatus(c.clusterName(), acidv1.ClusterStatusUpdating)
+	labelstring := fmt.Sprintf("%s=%s", "cluster-name", c.Postgresql.ObjectMeta.Labels["cluster-name"]) //labeladd
+	c.KubeClient.SetPostgresCRDStatus(c.clusterName(), acidv1.ClusterStatusUpdating, 0, labelstring) //labeledit  //credit
 	c.setSpec(newSpec)
 
 	defer func() {
@@ -897,9 +901,9 @@ func (c *Cluster) Update(oldSpec, newSpec *acidv1.Postgresql) error {
 			err             error
 		)
 		if updateFailed {
-			pgUpdatedStatus, err = c.KubeClient.SetPostgresCRDStatus(c.clusterName(), acidv1.ClusterStatusUpdateFailed)
+			pgUpdatedStatus, err = c.KubeClient.SetPostgresCRDStatus(c.clusterName(), acidv1.ClusterStatusUpdateFailed, 0, labelstring) //labeledit //credit
 		} else {
-			pgUpdatedStatus, err = c.KubeClient.SetPostgresCRDStatus(c.clusterName(), acidv1.ClusterStatusRunning)
+			pgUpdatedStatus, err = c.KubeClient.SetPostgresCRDStatus(c.clusterName(), acidv1.ClusterStatusRunning, newSpec.Spec.NumberOfInstances, labelstring) //labeledit //credit
 		}
 		if err != nil {
 			c.logger.Warningf("could not set cluster status: %v", err)
@@ -1154,14 +1158,10 @@ func (c *Cluster) Delete() error {
 		c.eventRecorder.Eventf(c.GetReference(), v1.EventTypeWarning, "Delete", "could not delete statefulset: %v", err)
 	}
 
-	if c.OpConfig.EnableSecretsDeletion != nil && *c.OpConfig.EnableSecretsDeletion {
-		if err := c.deleteSecrets(); err != nil {
-			anyErrors = true
-			c.logger.Warningf("could not delete secrets: %v", err)
-			c.eventRecorder.Eventf(c.GetReference(), v1.EventTypeWarning, "Delete", "could not delete secrets: %v", err)
-		}
-	} else {
-		c.logger.Info("not deleting secrets because disabled in configuration")
+	if err := c.deleteSecrets(); err != nil {
+		anyErrors = true
+		c.logger.Warningf("could not delete secrets: %v", err)
+		c.eventRecorder.Eventf(c.GetReference(), v1.EventTypeWarning, "Delete", "could not delete secrets: %v", err)
 	}
 
 	if err := c.deletePodDisruptionBudget(); err != nil {

@@ -68,6 +68,7 @@ func (c *Controller) createOperatorCRD(desiredCrd *apiextv1.CustomResourceDefini
 		// copy annotations and labels from existing CRD since we do not define them
 		desiredCrd.Annotations = crd.Annotations
 		desiredCrd.Labels = crd.Labels
+		desiredCrd=crd
 		patch, err := json.Marshal(desiredCrd)
 		if err != nil {
 			return fmt.Errorf("could not marshal new customResourceDefintion %q: %v", desiredCrd.Name, err)
