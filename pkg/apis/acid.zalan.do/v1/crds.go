@@ -25,6 +25,11 @@ const (
 	OperatorConfigCRDResourceShort  = "opconfig"
 )
 
+var (
+	specReplicasPath   = ".spec.numberOfInstances"
+	statusReplicasPath = ".status.numberOfInstances"
+)
+
 // PostgresCRDResourceColumns definition of AdditionalPrinterColumns for postgresql CRD
 var PostgresCRDResourceColumns = []apiextv1.CustomResourceColumnDefinition{
 	{
@@ -1981,7 +1986,7 @@ var OperatorConfigCRDResourceValidation = apiextv1.CustomResourceValidation{
 func buildCRD(name, kind, plural, list, short string,
 	categories []string,
 	columns []apiextv1.CustomResourceColumnDefinition,
-	validation apiextv1.CustomResourceValidation) *apiextv1.CustomResourceDefinition {
+	validation apiextv1.CustomResourceValidation, specReplicasPath string, statusReplicasPath string) *apiextv1.CustomResourceDefinition {
 	return &apiextv1.CustomResourceDefinition{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: fmt.Sprintf("%s/%s", apiextv1.GroupName, apiextv1.SchemeGroupVersion.Version),
@@ -2008,7 +2013,10 @@ func buildCRD(name, kind, plural, list, short string,
 					Storage: true,
 					Subresources: &apiextv1.CustomResourceSubresources{
 						Status: &apiextv1.CustomResourceSubresourceStatus{},
-						Scale:  &apiextv1.CustomResourceSubresourceScale{},
+						Scale: &apiextv1.CustomResourceSubresourceScale{
+							SpecReplicasPath:   specReplicasPath,
+							StatusReplicasPath: statusReplicasPath,
+						},
 					},
 					AdditionalPrinterColumns: columns,
 					Schema:                   &validation,
@@ -2027,7 +2035,9 @@ func PostgresCRD(crdCategories []string) *apiextv1.CustomResourceDefinition {
 		PostgresCRDResourceShort,
 		crdCategories,
 		PostgresCRDResourceColumns,
-		PostgresCRDResourceValidation)
+		PostgresCRDResourceValidation,
+		specReplicasPath,
+		statusReplicasPath)
 }
 
 // ConfigurationCRD returns CustomResourceDefinition built from OperatorConfigCRDResource
@@ -2039,5 +2049,7 @@ func ConfigurationCRD(crdCategories []string) *apiextv1.CustomResourceDefinition
 		OperatorConfigCRDResourceShort,
 		crdCategories,
 		OperatorConfigCRDResourceColumns,
-		OperatorConfigCRDResourceValidation)
+		OperatorConfigCRDResourceValidation,
+		specReplicasPath,
+		statusReplicasPath)
 }
