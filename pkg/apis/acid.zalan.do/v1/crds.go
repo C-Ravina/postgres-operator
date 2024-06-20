@@ -72,7 +72,7 @@ var PostgresCRDResourceColumns = []apiextv1.CustomResourceColumnDefinition{
 		Name:        "Status",
 		Type:        "string",
 		Description: "Current sync status of postgresql resource",
-		JSONPath:    ".status.PostgresClusterStatus",
+		JSONPath:    ".status.postgresClusterStatus",
 	},
 }
 
@@ -1100,8 +1100,15 @@ var PostgresCRDResourceValidation = apiextv1.CustomResourceValidation{
 			},
 			"status": {
 				Type: "object",
-				AdditionalProperties: &apiextv1.JSONSchemaPropsOrBool{
-					Schema: &apiextv1.JSONSchemaProps{
+				Properties: map[string]apiextv1.JSONSchemaProps{
+					"postgresClusterStatus": {
+						Type: "string",
+					},
+					"numberOfInstance": {
+						Type:   "integer",
+						Format: "int32",
+					},
+					"labelSelector": {
 						Type: "string",
 					},
 				},
@@ -2001,6 +2008,7 @@ func buildCRD(name, kind, plural, list, short string,
 					Storage: true,
 					Subresources: &apiextv1.CustomResourceSubresources{
 						Status: &apiextv1.CustomResourceSubresourceStatus{},
+						Scale:  &apiextv1.CustomResourceSubresourceScale{},
 					},
 					AdditionalPrinterColumns: columns,
 					Schema:                   &validation,
