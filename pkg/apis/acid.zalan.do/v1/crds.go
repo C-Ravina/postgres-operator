@@ -1110,7 +1110,7 @@ var PostgresCRDResourceValidation = apiextv1.CustomResourceValidation{
 					"postgresClusterStatus": {
 						Type: "string",
 					},
-					"numberOfInstance": {
+					"numberOfInstances": {
 						Type:   "integer",
 						Format: "int32",
 					},

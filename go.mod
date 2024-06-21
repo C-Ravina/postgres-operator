@@ -1,8 +1,8 @@
 module github.com/zalando/postgres-operator
 
-go 1.22.0
+go 1.22 //.0
 
-toolchain go1.22.2
+//toolchain go1.22.2
 
 replace k8s.io/apimachinery => k8s.io/apimachinery v0.28.7
 

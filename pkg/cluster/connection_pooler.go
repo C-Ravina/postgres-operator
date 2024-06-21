@@ -47,7 +47,6 @@ type ConnectionPoolerObjects struct {
 }
 
 func (c *Cluster) connectionPoolerName(role PostgresRole) string {
-	fmt.Println("Ravina: connectionPoolerName")
 	name := fmt.Sprintf("%s-%s", c.Name, constants.ConnectionPoolerResourceSuffix)
 	if role == Replica {
 		name = fmt.Sprintf("%s-%s", name, "repl")
@@ -80,7 +79,6 @@ func needReplicaConnectionPoolerWorker(spec *acidv1.PostgresSpec) bool {
 }
 
 func (c *Cluster) needConnectionPoolerUser(oldSpec, newSpec *acidv1.PostgresSpec) bool {
-	fmt.Println("Ravina: needConnectionPoolerUse")
 	// return true if pooler is needed AND was not disabled before OR user name differs
 	return (needMasterConnectionPoolerWorker(newSpec) || needReplicaConnectionPoolerWorker(newSpec)) &&
 		((!needMasterConnectionPoolerWorker(oldSpec) &&
@@ -89,7 +87,6 @@ func (c *Cluster) needConnectionPoolerUser(oldSpec, newSpec *acidv1.PostgresSpec
 }
 
 func (c *Cluster) poolerUser(spec *acidv1.PostgresSpec) string {
-	fmt.Println("Ravina: poolerUser")
 	connectionPoolerSpec := spec.ConnectionPooler
 	if connectionPoolerSpec == nil {
 		connectionPoolerSpec = &acidv1.ConnectionPooler{}
@@ -115,7 +112,6 @@ func (c *Cluster) poolerUser(spec *acidv1.PostgresSpec) string {
 // when listing pooler k8s objects
 func (c *Cluster) poolerLabelsSet(addExtraLabels bool) labels.Set {
 	poolerLabels := c.labelsSet(addExtraLabels)
-	fmt.Println("Ravina: poolerLabelsSet")
 
 	// TODO should be config values
 	poolerLabels["application"] = "db-connection-pooler"
@@ -130,7 +126,7 @@ func (c *Cluster) poolerLabelsSet(addExtraLabels bool) labels.Set {
 // be no difference, it will recreate also pooler pods).
 func (c *Cluster) connectionPoolerLabels(role PostgresRole, addExtraLabels bool) *metav1.LabelSelector {
 	poolerLabelsSet := c.poolerLabelsSet(addExtraLabels)
-	fmt.Println("Ravina: connectionPoolerLabels")
+
 	// TODO should be config values
 	poolerLabelsSet["connection-pooler"] = c.connectionPoolerName(role)
 
@@ -191,7 +187,6 @@ func (c *Cluster) createConnectionPooler(LookupFunction InstallFunction) (SyncRe
 // RESERVE_SIZE is how many additional connections to allow for a pooler.
 
 func (c *Cluster) getConnectionPoolerEnvVars() []v1.EnvVar {
-	fmt.Println("Ravina: generateConnectionPoolerEnvVars")
 	spec := &c.Spec
 	connectionPoolerSpec := spec.ConnectionPooler
 	if connectionPoolerSpec == nil {
@@ -258,7 +253,6 @@ func (c *Cluster) getConnectionPoolerEnvVars() []v1.EnvVar {
 func (c *Cluster) generateConnectionPoolerPodTemplate(role PostgresRole) (
 	*v1.PodTemplateSpec, error) {
 	spec := &c.Spec
-	fmt.Println("Ravina: generateConnectionPoolerPodTemplate")
 	connectionPoolerSpec := spec.ConnectionPooler
 	if connectionPoolerSpec == nil {
 		connectionPoolerSpec = &acidv1.ConnectionPooler{}
@@ -435,7 +429,6 @@ func (c *Cluster) generateConnectionPoolerPodTemplate(role PostgresRole) (
 
 func (c *Cluster) generateConnectionPoolerDeployment(connectionPooler *ConnectionPoolerObjects) (
 	*appsv1.Deployment, error) {
-	fmt.Println("Ravina: generateConnectionPoolerDeployment")
 	spec := &c.Spec
 
 	// there are two ways to enable connection pooler, either to specify a
@@ -493,7 +486,6 @@ func (c *Cluster) generateConnectionPoolerDeployment(connectionPooler *Connectio
 }
 
 func (c *Cluster) generateConnectionPoolerService(connectionPooler *ConnectionPoolerObjects) *v1.Service {
-	fmt.Println("Ravina: generateConnectionPoolerService")
 	spec := &c.Spec
 	poolerRole := connectionPooler.Role
 	serviceSpec := v1.ServiceSpec{
@@ -535,7 +527,6 @@ func (c *Cluster) generateConnectionPoolerService(connectionPooler *ConnectionPo
 }
 
 func (c *Cluster) generatePoolerServiceAnnotations(role PostgresRole, spec *acidv1.PostgresSpec) map[string]string {
-	fmt.Println("Ravina: generatePoolerServiceAnnotations")
 	var dnsString string
 	annotations := c.getCustomServiceAnnotations(role, spec)
 
@@ -562,7 +553,7 @@ func (c *Cluster) generatePoolerServiceAnnotations(role PostgresRole, spec *acid
 }
 
 func (c *Cluster) shouldCreateLoadBalancerForPoolerService(role PostgresRole, spec *acidv1.PostgresSpec) bool {
-	fmt.Println("Ravina: shouldCreateLoadBalancerForPoolerService")
+
 	switch role {
 
 	case Replica:
@@ -585,7 +576,6 @@ func (c *Cluster) shouldCreateLoadBalancerForPoolerService(role PostgresRole, sp
 }
 
 func (c *Cluster) listPoolerPods(listOptions metav1.ListOptions) ([]v1.Pod, error) {
-	fmt.Println("Ravina: listPoolerPods")
 	pods, err := c.KubeClient.Pods(c.Namespace).List(context.TODO(), listOptions)
 	if err != nil {
 		return nil, fmt.Errorf("could not get list of pooler pods: %v", err)
@@ -595,7 +585,6 @@ func (c *Cluster) listPoolerPods(listOptions metav1.ListOptions) ([]v1.Pod, erro
 
 // delete connection pooler
 func (c *Cluster) deleteConnectionPooler(role PostgresRole) (err error) {
-	fmt.Println("Ravina: deleteConnectionPooler")
 	c.logger.Infof("deleting connection pooler spilo-role=%s", role)
 
 	// Lack of connection pooler objects is not a fatal error, just log it if
@@ -655,7 +644,6 @@ func (c *Cluster) deleteConnectionPooler(role PostgresRole) (err error) {
 
 // delete connection pooler
 func (c *Cluster) deleteConnectionPoolerSecret() (err error) {
-	fmt.Println("Ravina: deleteConnectionPoolerSecret")
 	// Repeat the same for the secret object
 	secretName := c.credentialSecretName(c.OpConfig.ConnectionPooler.User)
 
@@ -676,8 +664,6 @@ func (c *Cluster) deleteConnectionPoolerSecret() (err error) {
 // Perform actual patching of a connection pooler deployment, assuming that all
 // the check were already done before.
 func updateConnectionPoolerDeployment(KubeClient k8sutil.KubernetesClient, newDeployment *appsv1.Deployment) (*appsv1.Deployment, error) {
-	fmt.Println("Ravina: updateConnectionPoolerDeployment")
-
 	if newDeployment == nil {
 		return nil, fmt.Errorf("there is no connection pooler in the cluster")
 	}
@@ -707,8 +693,6 @@ func updateConnectionPoolerDeployment(KubeClient k8sutil.KubernetesClient, newDe
 
 // updateConnectionPoolerAnnotations updates the annotations of connection pooler deployment
 func updateConnectionPoolerAnnotations(KubeClient k8sutil.KubernetesClient, deployment *appsv1.Deployment, annotations map[string]string) (*appsv1.Deployment, error) {
-	fmt.Println("Ravina: updateConnectionPoolerAnnotations")
-
 	patchData, err := metaAnnotationsPatch(annotations)
 	if err != nil {
 		return nil, fmt.Errorf("could not form patch for the connection pooler deployment metadata: %v", err)
@@ -731,7 +715,6 @@ func updateConnectionPoolerAnnotations(KubeClient k8sutil.KubernetesClient, depl
 // compare not the actual K8S objects, but the configuration itself and request
 // sync if there is any difference.
 func needSyncConnectionPoolerSpecs(oldSpec, newSpec *acidv1.ConnectionPooler, logger *logrus.Entry) (sync bool, reasons []string) {
-	fmt.Println("Ravina: needSyncConnectionPoolerSpecs")
 	reasons = []string{}
 	sync = false
 
@@ -757,7 +740,7 @@ func needSyncConnectionPoolerSpecs(oldSpec, newSpec *acidv1.ConnectionPooler, lo
 // Check if we need to synchronize connection pooler deployment due to new
 // defaults, that are different from what we see in the DeploymentSpec
 func (c *Cluster) needSyncConnectionPoolerDefaults(Config *Config, spec *acidv1.ConnectionPooler, deployment *appsv1.Deployment) (sync bool, reasons []string) {
-	fmt.Println("Ravina: needSyncConnectionPoolerDefaults")
+
 	reasons = []string{}
 	sync = false
 
@@ -836,7 +819,6 @@ func (c *Cluster) needSyncConnectionPoolerDefaults(Config *Config, spec *acidv1.
 // Generate default resource section for connection pooler deployment, to be
 // used if nothing custom is specified in the manifest
 func makeDefaultConnectionPoolerResources(config *config.Config) acidv1.Resources {
-	fmt.Println("Ravina: makeDefaultConnectionPoolerResources")
 
 	defaultRequests := acidv1.ResourceDescription{
 		CPU:    &config.ConnectionPooler.ConnectionPoolerDefaultCPURequest,
@@ -854,7 +836,6 @@ func makeDefaultConnectionPoolerResources(config *config.Config) acidv1.Resource
 }
 
 func logPoolerEssentials(log *logrus.Entry, oldSpec, newSpec *acidv1.Postgresql) {
-	fmt.Println("Ravina: logPoolerEssentials")
 	var v []string
 	var input []*bool
 
@@ -878,7 +859,6 @@ func logPoolerEssentials(log *logrus.Entry, oldSpec, newSpec *acidv1.Postgresql)
 }
 
 func (c *Cluster) syncConnectionPooler(oldSpec, newSpec *acidv1.Postgresql, LookupFunction InstallFunction) (SyncReason, error) {
-	fmt.Println("Ravina: syncConnectionPooler")
 
 	var reason SyncReason
 	var err error
@@ -977,7 +957,6 @@ func (c *Cluster) syncConnectionPooler(oldSpec, newSpec *acidv1.Postgresql, Look
 // the future references.
 func (c *Cluster) syncConnectionPoolerWorker(oldSpec, newSpec *acidv1.Postgresql, role PostgresRole) (
 	SyncReason, error) {
-	fmt.Println("Ravina: syncConnectionPoolerWorker", role)
 
 	var (
 		deployment    *appsv1.Deployment
