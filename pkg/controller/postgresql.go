@@ -161,8 +161,8 @@ func (c *Controller) acquireInitialListOfClusters() error {
 func (c *Controller) addCluster(lg *logrus.Entry, clusterName spec.NamespacedName, pgSpec *acidv1.Postgresql) (*cluster.Cluster, error) {
 	if c.opConfig.EnableTeamIdClusternamePrefix {
 		if _, err := acidv1.ExtractClusterName(clusterName.Name, pgSpec.Spec.TeamID); err != nil {
-			labelstring := fmt.Sprintf("%s=%s", "cluster-name", pgSpec.ObjectMeta.Labels["cluster-name"])  //labeladd
-			c.KubeClient.SetPostgresCRDStatus(clusterName, acidv1.ClusterStatusInvalid, pgSpec.Spec.NumberOfInstances, labelstring)  //labeledit //credit, chenge this to 0 later. for testing i tried pgSpec.Spec.NumberOfInstances
+			labelstring := fmt.Sprintf("%s=%s", "cluster-name", pgSpec.ObjectMeta.Labels["cluster-name"])                           //labeladd
+			c.KubeClient.SetPostgresCRDStatus(clusterName, acidv1.ClusterStatusInvalid, pgSpec.Spec.NumberOfInstances, labelstring) //labeledit //credit, chenge this to 0 later. for testing i tried pgSpec.Spec.NumberOfInstances
 			return nil, err
 		}
 	}
@@ -260,12 +260,14 @@ func (c *Controller) processEvent(event ClusterEvent) {
 		lg.Infoln("cluster has been created")
 	case EventUpdate:
 		lg.Infoln("update of the cluster started")
+		c.logger.Errorf("Ravina: inside case EventUpdate")
 
 		if !clusterFound {
 			lg.Warningln("cluster does not exist")
 			return
 		}
 		c.curWorkerCluster.Store(event.WorkerID, cl)
+		c.logger.Errorf("Ravina: before Update method is called from case EventUpdate")
 		err = cl.Update(event.OldSpec, event.NewSpec)
 		if err != nil {
 			cl.Error = fmt.Sprintf("could not update cluster: %v", err)
@@ -319,9 +321,11 @@ func (c *Controller) processEvent(event ClusterEvent) {
 		lg.Infof("cluster has been deleted")
 	case EventSync:
 		lg.Infof("syncing of the cluster started")
+		c.logger.Errorf("Ravina: inside case EventSync")
 
 		// no race condition because a cluster is always processed by single worker
 		if !clusterFound {
+			c.logger.Errorf("Ravina: before addCluster method is called from case EventSync")
 			cl, err = c.addCluster(lg, clusterName, event.NewSpec)
 			if err != nil {
 				lg.Errorf("syncing of cluster is blocked: %v", err)
@@ -341,6 +345,7 @@ func (c *Controller) processEvent(event ClusterEvent) {
 				return
 			}
 		} else {
+			c.logger.Errorf("Ravina: before Sync method is called from case EventSync")
 			if err = cl.Sync(event.NewSpec); err != nil {
 				cl.Error = fmt.Sprintf("could not sync cluster: %v", err)
 				c.eventRecorder.Eventf(cl.GetReference(), v1.EventTypeWarning, "Sync", "%v", cl.Error)
@@ -483,7 +488,7 @@ func (c *Controller) queueClusterEvent(informerOldSpec, informerNewSpec *acidv1.
 			c.KubeClient.SetPostgresCRDStatus(clusterName, acidv1.ClusterStatusUpdateFailed, 0, labelstring) //labeledit //credit
 			c.eventRecorder.Eventf(c.GetReference(informerNewSpec), v1.EventTypeWarning, "Update", "%v", clusterError)
 		default:
-			c.KubeClient.SetPostgresCRDStatus(clusterName, acidv1.ClusterStatusSyncFailed,0, labelstring) //labeledit  //credit
+			c.KubeClient.SetPostgresCRDStatus(clusterName, acidv1.ClusterStatusSyncFailed, 0, labelstring) //labeledit  //credit
 			c.eventRecorder.Eventf(c.GetReference(informerNewSpec), v1.EventTypeWarning, "Sync", "%v", clusterError)
 		}
 
