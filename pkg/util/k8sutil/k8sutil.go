@@ -5,8 +5,9 @@ import (
 	b64 "encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"reflect"
+
+	"github.com/davecgh/go-spew/spew"
 
 	clientbatchv1 "k8s.io/client-go/kubernetes/typed/batch/v1"
 
@@ -186,12 +187,13 @@ func NewFromConfig(cfg *rest.Config) (KubernetesClient, error) {
 }
 
 // SetPostgresCRDStatus of Postgres cluster
-func (client *KubernetesClient) SetPostgresCRDStatus(clusterName spec.NamespacedName, status string, numberOfInstances int32, labelSelector string) (*apiacidv1.Postgresql, error) {
+func (client *KubernetesClient) SetPostgresCRDStatus(clusterName spec.NamespacedName, status string, numberOfInstances int32, labelSelector string, observedGeneration int64) (*apiacidv1.Postgresql, error) {
 	var pg *apiacidv1.Postgresql
 	pgStatus := apiacidv1.PostgresStatus{}
 	pgStatus.PostgresClusterStatus = status
 	pgStatus.NumberOfInstances = numberOfInstances
 	pgStatus.LabelSelector = labelSelector
+	pgStatus.ObservedGeneration = observedGeneration
 
 	spew.Dump(pgStatus)
 	//fmt.Printf(" %+v \n", pgStatus)
@@ -472,4 +474,3 @@ func ClientMissingObjects() KubernetesClient {
 		ServicesGetter:    &MockServiceNotExistGetter{},
 	}
 }
-

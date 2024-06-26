@@ -161,8 +161,8 @@ func (c *Controller) acquireInitialListOfClusters() error {
 func (c *Controller) addCluster(lg *logrus.Entry, clusterName spec.NamespacedName, pgSpec *acidv1.Postgresql) (*cluster.Cluster, error) {
 	if c.opConfig.EnableTeamIdClusternamePrefix {
 		if _, err := acidv1.ExtractClusterName(clusterName.Name, pgSpec.Spec.TeamID); err != nil {
-			labelstring := fmt.Sprintf("%s=%s", "cluster-name", pgSpec.ObjectMeta.Labels["cluster-name"])                           //labeladd
-			c.KubeClient.SetPostgresCRDStatus(clusterName, acidv1.ClusterStatusInvalid, pgSpec.Spec.NumberOfInstances, labelstring) //labeledit //credit, chenge this to 0 later. for testing i tried pgSpec.Spec.NumberOfInstances
+			labelstring := fmt.Sprintf("%s=%s", "cluster-name", pgSpec.ObjectMeta.Labels["cluster-name"])                                                               //labeladd
+			c.KubeClient.SetPostgresCRDStatus(clusterName, acidv1.ClusterStatusInvalid, pgSpec.Status.NumberOfInstances, labelstring, pgSpec.Status.ObservedGeneration) //labeledit //credit, chenge this to 0 later. for testing i tried pgSpec.Spec.NumberOfInstances
 			return nil, err
 		}
 	}
@@ -482,13 +482,13 @@ func (c *Controller) queueClusterEvent(informerOldSpec, informerNewSpec *acidv1.
 
 		switch eventType {
 		case EventAdd:
-			c.KubeClient.SetPostgresCRDStatus(clusterName, acidv1.ClusterStatusAddFailed, 0, labelstring) //labeledit //credit
+			c.KubeClient.SetPostgresCRDStatus(clusterName, acidv1.ClusterStatusAddFailed, informerNewSpec.Status.NumberOfInstances, labelstring, informerNewSpec.Status.ObservedGeneration) //labeledit //credit
 			c.eventRecorder.Eventf(c.GetReference(informerNewSpec), v1.EventTypeWarning, "Create", "%v", clusterError)
 		case EventUpdate:
-			c.KubeClient.SetPostgresCRDStatus(clusterName, acidv1.ClusterStatusUpdateFailed, 0, labelstring) //labeledit //credit
+			c.KubeClient.SetPostgresCRDStatus(clusterName, acidv1.ClusterStatusUpdateFailed, informerNewSpec.Status.NumberOfInstances, labelstring, informerNewSpec.Status.ObservedGeneration) //labeledit //credit
 			c.eventRecorder.Eventf(c.GetReference(informerNewSpec), v1.EventTypeWarning, "Update", "%v", clusterError)
 		default:
-			c.KubeClient.SetPostgresCRDStatus(clusterName, acidv1.ClusterStatusSyncFailed, 0, labelstring) //labeledit  //credit
+			c.KubeClient.SetPostgresCRDStatus(clusterName, acidv1.ClusterStatusSyncFailed, informerNewSpec.Status.NumberOfInstances, labelstring, informerNewSpec.Status.ObservedGeneration) //labeledit  //credit
 			c.eventRecorder.Eventf(c.GetReference(informerNewSpec), v1.EventTypeWarning, "Sync", "%v", clusterError)
 		}
 

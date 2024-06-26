@@ -228,6 +228,7 @@ type PostgresStatus struct {
 	PostgresClusterStatus string `json:"postgresClusterStatus"`
 	NumberOfInstances     int32  `json:"numberOfInstances"`
 	LabelSelector         string `json:"labelSelector"`
+	ObservedGeneration    int64  `json:"observedGeneration,omitempty"`
 }
 
 // ConnectionPooler Options for connection pooler
@@ -268,4 +269,3 @@ type StreamTable struct {
 	IdColumn          *string `json:"idColumn,omitempty"`
 	PayloadColumn     *string `json:"payloadColumn,omitempty"`
 }
-
