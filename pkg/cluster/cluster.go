@@ -891,8 +891,8 @@ func (c *Cluster) Update(oldSpec, newSpec *acidv1.Postgresql) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	labelstring := fmt.Sprintf("%s=%s", "cluster-name", c.Postgresql.ObjectMeta.Labels["cluster-name"])                                      //labeladd
-	c.KubeClient.SetPostgresCRDStatus(c.clusterName(), acidv1.ClusterStatusUpdating, 0, labelstring, c.Postgresql.Status.ObservedGeneration) //labeledit  //credit
+	labelstring := fmt.Sprintf("%s=%s", "cluster-name", c.Postgresql.ObjectMeta.Labels["cluster-name"])                                                                          //labeladd
+	c.KubeClient.SetPostgresCRDStatus(c.clusterName(), acidv1.ClusterStatusUpdating, c.Postgresql.Status.NumberOfInstances, labelstring, c.Postgresql.Status.ObservedGeneration) //labeledit  //credit
 	c.setSpec(newSpec)
 
 	defer func() {

@@ -1117,6 +1117,10 @@ var PostgresCRDResourceValidation = apiextv1.CustomResourceValidation{
 					"labelSelector": {
 						Type: "string",
 					},
+					"observedGeneration": {
+						Type:   "integer",
+						Format: "int64",
+					},
 				},
 			},
 		},
