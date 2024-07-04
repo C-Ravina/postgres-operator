@@ -1121,6 +1121,32 @@ var PostgresCRDResourceValidation = apiextv1.CustomResourceValidation{
 						Type:   "integer",
 						Format: "int64",
 					},
+					"conditions": {
+						Type: "array",
+						Items: &apiextv1.JSONSchemaPropsOrArray{
+							Schema: &apiextv1.JSONSchemaProps{
+								Type: "object",
+								Properties: map[string]apiextv1.JSONSchemaProps{
+									"type": {
+										Type: "string",
+									},
+									"status": {
+										Type: "string",
+									},
+									"lastTransitionTime": {
+										Type:   "string",
+										Format: "date-time",
+									},
+									"reason": {
+										Type: "string",
+									},
+									"message": {
+										Type: "string",
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
