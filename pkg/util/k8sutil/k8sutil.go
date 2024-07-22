@@ -188,7 +188,7 @@ func NewFromConfig(cfg *rest.Config) (KubernetesClient, error) {
 }
 
 // SetPostgresCRDStatus of Postgres cluster
-func (client *KubernetesClient) SetPostgresCRDStatus(clusterName spec.NamespacedName, status string, numberOfInstances int32, labelSelector string, observedGeneration int64, existingCondition apiacidv1.Conditions) (*apiacidv1.Postgresql, error) {
+func (client *KubernetesClient) SetPostgresCRDStatus(clusterName spec.NamespacedName, status string, numberOfInstances int32, labelSelector string, observedGeneration int64, existingCondition apiacidv1.Conditions, message string) (*apiacidv1.Postgresql, error) {
 	var pg *apiacidv1.Postgresql
 	pgStatus := apiacidv1.PostgresStatus{}
 	pgStatus.PostgresClusterStatus = status
@@ -196,7 +196,7 @@ func (client *KubernetesClient) SetPostgresCRDStatus(clusterName spec.Namespaced
 	pgStatus.LabelSelector = labelSelector
 	pgStatus.ObservedGeneration = observedGeneration
 
-	newConditions := updateConditions(existingCondition, status)
+	newConditions := updateConditions(existingCondition, status, message)
 	pgStatus.Conditions = newConditions
 
 	spew.Dump(pgStatus)
@@ -223,7 +223,7 @@ func (client *KubernetesClient) SetPostgresCRDStatus(clusterName spec.Namespaced
 	return pg, nil
 }
 
-func updateConditions(existingConditions apiacidv1.Conditions, currentStatus string) apiacidv1.Conditions {
+func updateConditions(existingConditions apiacidv1.Conditions, currentStatus string, message string) apiacidv1.Conditions {
 	now := apiacidv1.VolatileTime{Inner: metav1.NewTime(time.Now())}
 	var readyCondition, reconciliationCondition *apiacidv1.Condition
 
@@ -272,13 +272,17 @@ func updateConditions(existingConditions apiacidv1.Conditions, currentStatus str
 
 	// Update ReconciliationSuccessful condition
 	reconciliationCondition.LastTransitionTime = now
+	reconciliationCondition.Message = message
 	if currentStatus == "Running" {
 		reconciliationCondition.Status = v1.ConditionTrue
-		reconciliationCondition.Message = ""
+		reconciliationCondition.Reason = "" //when the reconcilation fails, then the status would be updated.
+		//again when the cluster is running, if i didnt update it to be an empty string,
+		//it would still be printing the old status when reconsilation failed
+		//reconciliationCondition.Message = ""
 	} else {
 		reconciliationCondition.Status = v1.ConditionFalse
 		reconciliationCondition.Reason = currentStatus
-		reconciliationCondition.Message = "with the error"
+		//reconciliationCondition.Message = err.Error()
 	}
 
 	return existingConditions
