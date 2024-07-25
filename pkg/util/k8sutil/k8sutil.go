@@ -237,20 +237,34 @@ func updateConditions(existingConditions apiacidv1.Conditions, currentStatus str
 	}
 
 	// Initialize conditions if not present
-	if readyCondition == nil {
-		existingConditions = append(existingConditions, apiacidv1.Condition{Type: "Ready"})
-		readyCondition = &existingConditions[len(existingConditions)-1]
-	}
-	if reconciliationCondition == nil {
-		existingConditions = append(existingConditions, apiacidv1.Condition{Type: "ReconciliationSuccessful"})
-		reconciliationCondition = &existingConditions[len(existingConditions)-1]
+	switch currentStatus {
+	case "Creating":
+		if reconciliationCondition == nil {
+			fmt.Println("creating reconciliationCondition when creating")
+			existingConditions = append(existingConditions, apiacidv1.Condition{Type: "ReconciliationSuccessful"})
+			reconciliationCondition = &existingConditions[len(existingConditions)-1]
+
+		}
+	default:
+		if readyCondition == nil {
+			fmt.Println("creating readyCondition when case is default")
+			existingConditions = append(existingConditions, apiacidv1.Condition{Type: "Ready"})
+			readyCondition = &existingConditions[len(existingConditions)-1]
+		}
+		/*
+			if reconciliationCondition == nil {
+				existingConditions = append(existingConditions, apiacidv1.Condition{Type: "ReconciliationSuccessful"})
+				reconciliationCondition = &existingConditions[len(existingConditions)-1]
+			}
+		*/
 	}
 
 	// Update Ready condition
 	switch currentStatus {
-	case "Creating":
-		readyCondition.Status = v1.ConditionFalse
-		readyCondition.LastTransitionTime = now
+	/*case "Creating":
+	readyCondition.Status = v1.ConditionFalse
+	readyCondition.LastTransitionTime = now
+	*/
 	case "Running":
 		readyCondition.Status = v1.ConditionTrue
 		readyCondition.LastTransitionTime = now
