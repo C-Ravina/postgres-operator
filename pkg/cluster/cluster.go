@@ -907,7 +907,7 @@ func (c *Cluster) Update(oldSpec, newSpec *acidv1.Postgresql) error {
 			pgUpdatedStatus, err = c.KubeClient.SetPostgresCRDStatus(c.clusterName(), acidv1.ClusterStatusUpdateFailed, c.Postgresql.Status.NumberOfInstances, labelstring, c.Postgresql.Status.ObservedGeneration, existingCondition, err.Error())
 			c.logger.Errorf("Ravina: inside defer func, setting updatefailed in status")
 		} else {
-			pgUpdatedStatus, err = c.KubeClient.SetPostgresCRDStatus(c.clusterName(), acidv1.ClusterStatusRunning, newSpec.Spec.NumberOfInstances, labelstring, c.Postgresql.Status.ObservedGeneration+1, existingCondition, "")
+			pgUpdatedStatus, err = c.KubeClient.SetPostgresCRDStatus(c.clusterName(), acidv1.ClusterStatusRunning, newSpec.Spec.NumberOfInstances, labelstring, c.Postgresql.Generation, existingCondition, "")
 			c.logger.Errorf("Ravina: inside defer func, setting running in status")
 		}
 		if err != nil {
