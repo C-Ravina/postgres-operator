@@ -222,6 +222,112 @@ func (client *KubernetesClient) SetPostgresCRDStatus(clusterName spec.Namespaced
 
 	return pg, nil
 }
+/*
+func updateConditions(existingConditions apiacidv1.Conditions, currentStatus string, message string) apiacidv1.Conditions {
+	now := apiacidv1.VolatileTime{Inner: metav1.NewTime(time.Now())}
+	var readyCondition, reconciliationCondition *apiacidv1.Condition
+	var newConditions = apiacidv1.Conditions{}
+
+	// Find existing conditions
+	for i := range existingConditions {
+		if existingConditions[i].Type == "Ready" {
+			readyCondition = &existingConditions[i]
+			fmt.Println("ready type in finding existing condns")
+		} else if existingConditions[i].Type == "ReconciliationSuccessful" {
+			reconciliationCondition = &existingConditions[i]
+			fmt.Println("recon successful in finding existing conds")
+		}
+	}
+
+	// Initialize conditions if not present
+	switch currentStatus {
+	case "Creating":
+		if reconciliationCondition == nil {
+			fmt.Println("creating reconciliationCondition when creating")
+			existingConditions = append(existingConditions, apiacidv1.Condition{Type: "ReconciliationSuccessful"})
+			reconciliationCondition = &existingConditions[len(existingConditions)-1]
+			fmt.Println("printing reconcilaionsuccessful condition after creating it in case:creatinh")
+			fmt.Printf("Detailed with fmt.Printf %%#v: %#v\n", reconciliationCondition)
+
+
+		}
+	default:
+		if readyCondition == nil {
+			fmt.Println("creating readyCondition when case is default")
+			existingConditions = append(existingConditions, apiacidv1.Condition{Type: "Ready"})
+			readyCondition = &existingConditions[len(existingConditions)-1]
+			fmt.Println("printing ready condition after creating it in default")
+			fmt.Printf("Detailed with fmt.Printf %%#v: %#v\n", readyCondition)
+		}
+		/*
+			if reconciliationCondition == nil {
+				existingConditions = append(existingConditions, apiacidv1.Condition{Type: "ReconciliationSuccessful"})
+				reconciliationCondition = &existingConditions[len(existingConditions)-1]
+			}
+	}
+
+	// Update Ready condition
+	switch currentStatus {
+	/*case "Creating":
+	readyCondition.Status = v1.ConditionFalse
+	readyCondition.LastTransitionTime = now
+	
+	case "Running":
+		fmt.Println("ready condition : case running")
+		readyCondition.Status = v1.ConditionTrue
+		readyCondition.LastTransitionTime = now
+	case "CreateFailed":
+		fmt.Println("ready condition : case createfailed")
+		readyCondition.Status = v1.ConditionFalse
+		readyCondition.LastTransitionTime = now
+	case "UpdateFailed", "SyncFailed", "Invalid": //if ready is previously false, then reatining the same value AND update time
+		fmt.Println("ready condition : case failed cases")
+		if readyCondition.Status == v1.ConditionFalse { //else: if it is previosuly true, then it should still be true and need not update time
+			readyCondition.LastTransitionTime = now //so no need for else condn here
+		}
+	case "Updating":
+		// not updatinf time, just setting the status
+		fmt.Println("ready condition : case updating")
+		if readyCondition.Status == v1.ConditionFalse {
+			readyCondition.Status = v1.ConditionFalse
+		} else {
+			readyCondition.Status = v1.ConditionTrue
+		}
+	}
+
+	// Update ReconciliationSuccessful condition
+	fmt.Println("reconsilation condn: starts here")
+	reconciliationCondition.LastTransitionTime = now
+	reconciliationCondition.Message = message
+	fmt.Println("entering if to set recon status")
+	if currentStatus == "Running" {
+		fmt.Println("reconciliationCondition condition : case running")
+		reconciliationCondition.Status = v1.ConditionTrue
+		reconciliationCondition.Reason = "" //when the reconcilation fails, then the status would be updated.
+		//again when the cluster is running, if i didnt update it to be an empty string,
+		//it would still be printing the old status when reconsilation failed
+		//reconciliationCondition.Message = ""
+		fmt.Printf("reconciliationCondition.Status: %t",reconciliationCondition.Status)
+	} else {
+		fmt.Println("reconciliationCondition condition : case else")
+		reconciliationCondition.Status = v1.ConditionFalse
+		reconciliationCondition.Reason = currentStatus
+		//reconciliationCondition.Message = err.Error()
+	}
+
+	fmt.Printf("Detailed reconsilation condition with  fmt.Printf %%#v: %#v\n", reconciliationCondition)
+	fmt.Printf("Detailed ready Condition with fmt.Printf %%#v: %#v\n", readyCondition)
+	fmt.Println("printing before return stmt in updateconsitions func")
+
+	fmt.Printf("Detailed with fmt.Printf %%#v: %#v\n", existingConditions)
+
+	newConditions = append(newConditions, *readyCondition, *reconciliationCondition)
+	fmt.Printf("Detailed with fmt.Printf %%#v: %#v\n", newConditions)
+
+
+	return newConditions
+}
+*/
 
 func updateConditions(existingConditions apiacidv1.Conditions, currentStatus string, message string) apiacidv1.Conditions {
 	now := apiacidv1.VolatileTime{Inner: metav1.NewTime(time.Now())}
@@ -298,6 +404,14 @@ func updateConditions(existingConditions apiacidv1.Conditions, currentStatus str
 		reconciliationCondition.Reason = currentStatus
 		//reconciliationCondition.Message = err.Error()
 	}
+	// Directly modify elements in the existingConditions slice
+        for i := range existingConditions {
+                if existingConditions[i].Type == "Ready" && readyCondition != nil {
+                        existingConditions[i] = *readyCondition
+                } else if existingConditions[i].Type == "ReconciliationSuccessful" && reconciliationCondition != nil {
+                        existingConditions[i] = *reconciliationCondition
+                }
+        }
 
 	return existingConditions
 }

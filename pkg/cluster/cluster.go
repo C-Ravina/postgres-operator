@@ -263,7 +263,7 @@ func (c *Cluster) Create() (err error) {
 		labelstring := fmt.Sprintf("%s=%s", "cluster-name", c.Postgresql.ObjectMeta.Labels["cluster-name"])
 		existingCondition := c.Postgresql.Status.Conditions
 		if err == nil {
-			pgUpdatedStatus, errStatus = c.KubeClient.SetPostgresCRDStatus(c.clusterName(), acidv1.ClusterStatusRunning, c.Postgresql.Spec.NumberOfInstances, labelstring, 1, existingCondition, "") //TODO: are you sure it's running?
+			pgUpdatedStatus, errStatus = c.KubeClient.SetPostgresCRDStatus(c.clusterName(), acidv1.ClusterStatusRunning, c.Postgresql.Spec.NumberOfInstances, labelstring, c.Postgresql.Generation, existingCondition, "") //TODO: are you sure it's running?
 		} else {
 			c.logger.Warningf("cluster created failed: %v", err)
 			pgUpdatedStatus, errStatus = c.KubeClient.SetPostgresCRDStatus(c.clusterName(), acidv1.ClusterStatusAddFailed, 0, labelstring, 0, existingCondition, err.Error())
