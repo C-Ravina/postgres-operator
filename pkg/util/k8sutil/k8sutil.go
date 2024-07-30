@@ -8,6 +8,8 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
+
 	clientbatchv1 "k8s.io/client-go/kubernetes/typed/batch/v1"
 
 	apiacidv1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
@@ -197,9 +199,13 @@ func (client *KubernetesClient) SetPostgresCRDStatus(clusterName spec.Namespaced
 	newConditions := updateConditions(existingCondition, status)
 	pgStatus.Conditions = newConditions
 
+	spew.Dump(pgStatus)
+	//fmt.Printf(" %+v \n", pgStatus)
+
 	patch, err := json.Marshal(struct {
 		PgStatus interface{} `json:"status"`
 	}{&pgStatus})
+	fmt.Printf("patch: %s\n", string(patch))
 
 	if err != nil {
 		return pg, fmt.Errorf("could not marshal status: %v", err)
@@ -217,11 +223,7 @@ func (client *KubernetesClient) SetPostgresCRDStatus(clusterName spec.Namespaced
 	return pg, nil
 }
 
-<<<<<<< Updated upstream
 func updateConditions(existingConditions apiacidv1.Conditions, currentStatus string) apiacidv1.Conditions {
-=======
-func updateConditions(existingConditions apiacidv1.Conditions, currentStatus string, message string) apiacidv1.Conditions {
->>>>>>> Stashed changes
 	now := apiacidv1.VolatileTime{Inner: metav1.NewTime(time.Now())}
 	var readyCondition, reconciliationCondition *apiacidv1.Condition
 
@@ -235,7 +237,6 @@ func updateConditions(existingConditions apiacidv1.Conditions, currentStatus str
 	}
 
 	// Initialize conditions if not present
-<<<<<<< Updated upstream
 	if readyCondition == nil {
 		existingConditions = append(existingConditions, apiacidv1.Condition{Type: "Ready"})
 		readyCondition = &existingConditions[len(existingConditions)-1]
@@ -243,41 +244,22 @@ func updateConditions(existingConditions apiacidv1.Conditions, currentStatus str
 	if reconciliationCondition == nil {
 		existingConditions = append(existingConditions, apiacidv1.Condition{Type: "ReconciliationSuccessful"})
 		reconciliationCondition = &existingConditions[len(existingConditions)-1]
-=======
-	switch currentStatus {
-	case "Creating":
-		if reconciliationCondition == nil {
-			fmt.Println("creating reconciliationCondition when creating")
-			existingConditions = append(existingConditions, apiacidv1.Condition{Type: "ReconciliationSuccessful"})
-			reconciliationCondition = &existingConditions[len(existingConditions)-1]
-
-		}
-	default:
-		if readyCondition == nil {
-			fmt.Println("creating readyCondition when case is default")
-			existingConditions = append(existingConditions, apiacidv1.Condition{Type: "Ready"})
-			readyCondition = &existingConditions[len(existingConditions)-1]
-		}
->>>>>>> Stashed changes
 	}
 
 	// Update Ready condition
 	switch currentStatus {
-<<<<<<< Updated upstream
 	case "Creating":
 		readyCondition.Status = v1.ConditionFalse
 		readyCondition.LastTransitionTime = now
-=======
->>>>>>> Stashed changes
 	case "Running":
 		readyCondition.Status = v1.ConditionTrue
 		readyCondition.LastTransitionTime = now
 	case "CreateFailed":
 		readyCondition.Status = v1.ConditionFalse
 		readyCondition.LastTransitionTime = now
-	case "UpdateFailed", "SyncFailed", "Invalid":
-		if readyCondition.Status == v1.ConditionFalse {
-			readyCondition.LastTransitionTime = now
+	case "UpdateFailed", "SyncFailed", "Invalid": //if ready is previously false, then reatining the same value AND update time
+		if readyCondition.Status == v1.ConditionFalse { //else: if it is previosuly true, then it should still be true and need not update time
+			readyCondition.LastTransitionTime = now //so no need for else condn here
 		}
 	case "Updating":
 		// not updatinf time, just setting the status
@@ -292,18 +274,11 @@ func updateConditions(existingConditions apiacidv1.Conditions, currentStatus str
 	reconciliationCondition.LastTransitionTime = now
 	if currentStatus == "Running" {
 		reconciliationCondition.Status = v1.ConditionTrue
-<<<<<<< Updated upstream
 		reconciliationCondition.Message = ""
 	} else {
 		reconciliationCondition.Status = v1.ConditionFalse
 		reconciliationCondition.Reason = currentStatus
 		reconciliationCondition.Message = "with the error"
-=======
-		reconciliationCondition.Reason = ""
-	} else {
-		reconciliationCondition.Status = v1.ConditionFalse
-		reconciliationCondition.Reason = currentStatus
->>>>>>> Stashed changes
 	}
 
 	return existingConditions
