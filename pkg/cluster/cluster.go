@@ -905,10 +905,8 @@ func (c *Cluster) Update(oldSpec, newSpec *acidv1.Postgresql) error {
 		)
 		if updateFailed {
 			pgUpdatedStatus, err = c.KubeClient.SetPostgresCRDStatus(c.clusterName(), acidv1.ClusterStatusUpdateFailed, c.Postgresql.Status.NumberOfInstances, labelstring, c.Postgresql.Status.ObservedGeneration, existingCondition, err.Error())
-			c.logger.Errorf("Ravina: inside defer func, setting updatefailed in status")
 		} else {
 			pgUpdatedStatus, err = c.KubeClient.SetPostgresCRDStatus(c.clusterName(), acidv1.ClusterStatusRunning, newSpec.Spec.NumberOfInstances, labelstring, c.Postgresql.Generation, existingCondition, "")
-			c.logger.Errorf("Ravina: inside defer func, setting running in status")
 		}
 		if err != nil {
 			c.logger.Warningf("could not set cluster status: %v", err)
@@ -933,7 +931,6 @@ func (c *Cluster) Update(oldSpec, newSpec *acidv1.Postgresql) error {
 	// Service
 	if !reflect.DeepEqual(c.generateService(Master, &oldSpec.Spec), c.generateService(Master, &newSpec.Spec)) ||
 		!reflect.DeepEqual(c.generateService(Replica, &oldSpec.Spec), c.generateService(Replica, &newSpec.Spec)) {
-		c.logger.Errorf("Ravina: before syncServices method is called")
 		if err := c.syncServices(); err != nil {
 			c.logger.Errorf("could not sync services: %v", err)
 			updateFailed = true
@@ -958,7 +955,6 @@ func (c *Cluster) Update(oldSpec, newSpec *acidv1.Postgresql) error {
 
 		if !sameUsers || !sameRotatedUsers || needPoolerUser || needStreamUser {
 			c.logger.Debugf("initialize users")
-			c.logger.Errorf("Ravina: before syncServices method is called")
 			if err := c.initUsers(); err != nil {
 				c.logger.Errorf("could not init users - skipping sync of secrets and databases: %v", err)
 				userInitFailed = true
@@ -1007,7 +1003,6 @@ func (c *Cluster) Update(oldSpec, newSpec *acidv1.Postgresql) error {
 			c.logger.Debugf("syncing statefulsets")
 			syncStatefulSet = false
 			// TODO: avoid generating the StatefulSet object twice by passing it to syncStatefulSet
-			c.logger.Errorf("Ravina: before syncStatefulSet method is called")
 			if err := c.syncStatefulSet(); err != nil {
 				c.logger.Errorf("could not sync statefulsets: %v", err)
 				updateFailed = true
@@ -1017,7 +1012,6 @@ func (c *Cluster) Update(oldSpec, newSpec *acidv1.Postgresql) error {
 
 	// add or remove standby_cluster section from Patroni config depending on changes in standby section
 	if !reflect.DeepEqual(oldSpec.Spec.StandbyCluster, newSpec.Spec.StandbyCluster) {
-		c.logger.Errorf("Ravina: before syncStandbyClusterConfiguration method is called")
 		if err := c.syncStandbyClusterConfiguration(); err != nil {
 			return fmt.Errorf("could not set StandbyCluster configuration options: %v", err)
 		}
@@ -1026,7 +1020,6 @@ func (c *Cluster) Update(oldSpec, newSpec *acidv1.Postgresql) error {
 	// pod disruption budget
 	if oldSpec.Spec.NumberOfInstances != newSpec.Spec.NumberOfInstances {
 		c.logger.Debug("syncing pod disruption budgets")
-		c.logger.Errorf("Ravina: before syncPodDisruptionBudget method is called")
 		if err := c.syncPodDisruptionBudget(true); err != nil {
 			c.logger.Errorf("could not sync pod disruption budget: %v", err)
 			updateFailed = true
@@ -1073,7 +1066,6 @@ func (c *Cluster) Update(oldSpec, newSpec *acidv1.Postgresql) error {
 	// Roles and Databases
 	if !userInitFailed && !(c.databaseAccessDisabled() || c.getNumberOfInstances(&c.Spec) <= 0 || c.Spec.StandbyCluster != nil) {
 		c.logger.Debugf("syncing roles")
-		c.logger.Errorf("Ravina: before syncRoles method is called")
 		if err := c.syncRoles(); err != nil {
 			c.logger.Errorf("could not sync roles: %v", err)
 			updateFailed = true
@@ -1081,7 +1073,6 @@ func (c *Cluster) Update(oldSpec, newSpec *acidv1.Postgresql) error {
 		if !reflect.DeepEqual(oldSpec.Spec.Databases, newSpec.Spec.Databases) ||
 			!reflect.DeepEqual(oldSpec.Spec.PreparedDatabases, newSpec.Spec.PreparedDatabases) {
 			c.logger.Infof("syncing databases")
-			c.logger.Errorf("Ravina: before syncDatabases method is called")
 			if err := c.syncDatabases(); err != nil {
 				c.logger.Errorf("could not sync databases: %v", err)
 				updateFailed = true
@@ -1101,7 +1092,6 @@ func (c *Cluster) Update(oldSpec, newSpec *acidv1.Postgresql) error {
 	// need to process. In the future we may want to do this more careful and
 	// check which databases we need to process, but even repeating the whole
 	// installation process should be good enough.
-	c.logger.Errorf("Ravina: before syncConnectionPooler method is called")
 	if _, err := c.syncConnectionPooler(oldSpec, newSpec, c.installLookupFunction); err != nil {
 		c.logger.Errorf("could not sync connection pooler: %v", err)
 		updateFailed = true
@@ -1149,7 +1139,6 @@ func (c *Cluster) Delete() error {
 	var anyErrors = false
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.logger.Errorf("Ravina: Delete() from cluster.go called")
 	c.eventRecorder.Event(c.GetReference(), v1.EventTypeNormal, "Delete", "Started deletion of cluster resources")
 
 	if err := c.deleteStreams(); err != nil {
