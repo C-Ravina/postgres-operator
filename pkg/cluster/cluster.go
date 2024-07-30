@@ -263,10 +263,10 @@ func (c *Cluster) Create() (err error) {
 		labelstring := fmt.Sprintf("%s=%s", "cluster-name", c.Postgresql.ObjectMeta.Labels["cluster-name"])
 		existingCondition := c.Postgresql.Status.Conditions
 		if err == nil {
-			pgUpdatedStatus, errStatus = c.KubeClient.SetPostgresCRDStatus(c.clusterName(), acidv1.ClusterStatusRunning, c.Postgresql.Spec.NumberOfInstances, labelstring, c.Postgresql.Generation, existingCondition, "") //TODO: are you sure it's running?
+			pgUpdatedStatus, errStatus = c.KubeClient.SetPostgresCRDStatus(c.clusterName(), acidv1.ClusterStatusRunning, c.Postgresql.Spec.NumberOfInstances, labelstring, 1, existingCondition) //TODO: are you sure it's running?
 		} else {
 			c.logger.Warningf("cluster created failed: %v", err)
-			pgUpdatedStatus, errStatus = c.KubeClient.SetPostgresCRDStatus(c.clusterName(), acidv1.ClusterStatusAddFailed, 0, labelstring, 0, existingCondition, err.Error())
+			pgUpdatedStatus, errStatus = c.KubeClient.SetPostgresCRDStatus(c.clusterName(), acidv1.ClusterStatusAddFailed, 0, labelstring, 0, existingCondition)
 		}
 		if errStatus != nil {
 			c.logger.Warningf("could not set cluster status: %v", errStatus)
@@ -278,7 +278,7 @@ func (c *Cluster) Create() (err error) {
 
 	labelstring := fmt.Sprintf("%s=%s", "cluster-name", c.Postgresql.ObjectMeta.Labels["cluster-name"])
 	existingCondition := c.Postgresql.Status.Conditions
-	pgCreateStatus, err = c.KubeClient.SetPostgresCRDStatus(c.clusterName(), acidv1.ClusterStatusCreating, 0, labelstring, 0, existingCondition, "")
+	pgCreateStatus, err = c.KubeClient.SetPostgresCRDStatus(c.clusterName(), acidv1.ClusterStatusCreating, 0, labelstring, 0, existingCondition)
 	if err != nil {
 		return fmt.Errorf("could not set cluster status: %v", err)
 	}
@@ -895,7 +895,7 @@ func (c *Cluster) Update(oldSpec, newSpec *acidv1.Postgresql) error {
 
 	labelstring := fmt.Sprintf("%s=%s", "cluster-name", c.Postgresql.ObjectMeta.Labels["cluster-name"])
 	existingCondition := c.Postgresql.Status.Conditions
-	c.KubeClient.SetPostgresCRDStatus(c.clusterName(), acidv1.ClusterStatusUpdating, c.Postgresql.Status.NumberOfInstances, labelstring, c.Postgresql.Status.ObservedGeneration, existingCondition, "")
+	c.KubeClient.SetPostgresCRDStatus(c.clusterName(), acidv1.ClusterStatusUpdating, c.Postgresql.Status.NumberOfInstances, labelstring, c.Postgresql.Status.ObservedGeneration, existingCondition)
 	c.setSpec(newSpec)
 
 	defer func() {
@@ -904,9 +904,17 @@ func (c *Cluster) Update(oldSpec, newSpec *acidv1.Postgresql) error {
 			err             error
 		)
 		if updateFailed {
+<<<<<<< Updated upstream
+			pgUpdatedStatus, err = c.KubeClient.SetPostgresCRDStatus(c.clusterName(), acidv1.ClusterStatusUpdateFailed, c.Postgresql.Status.NumberOfInstances, labelstring, c.Postgresql.Status.ObservedGeneration, existingCondition)
+			c.logger.Errorf("Ravina: inside defer func, setting updatefailed in status")
+		} else {
+			pgUpdatedStatus, err = c.KubeClient.SetPostgresCRDStatus(c.clusterName(), acidv1.ClusterStatusRunning, newSpec.Spec.NumberOfInstances, labelstring, c.Postgresql.Status.ObservedGeneration+1, existingCondition)
+			c.logger.Errorf("Ravina: inside defer func, setting running in status")
+=======
 			pgUpdatedStatus, err = c.KubeClient.SetPostgresCRDStatus(c.clusterName(), acidv1.ClusterStatusUpdateFailed, c.Postgresql.Status.NumberOfInstances, labelstring, c.Postgresql.Status.ObservedGeneration, existingCondition, err.Error())
 		} else {
 			pgUpdatedStatus, err = c.KubeClient.SetPostgresCRDStatus(c.clusterName(), acidv1.ClusterStatusRunning, newSpec.Spec.NumberOfInstances, labelstring, c.Postgresql.Generation, existingCondition, "")
+>>>>>>> Stashed changes
 		}
 		if err != nil {
 			c.logger.Warningf("could not set cluster status: %v", err)
