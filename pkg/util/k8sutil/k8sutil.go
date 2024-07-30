@@ -186,7 +186,7 @@ func NewFromConfig(cfg *rest.Config) (KubernetesClient, error) {
 }
 
 // SetPostgresCRDStatus of Postgres cluster
-func (client *KubernetesClient) SetPostgresCRDStatus(clusterName spec.NamespacedName, status string, numberOfInstances int32, labelSelector string, observedGeneration int64, existingCondition apiacidv1.Conditions) (*apiacidv1.Postgresql, error) {
+func (client *KubernetesClient) SetPostgresCRDStatus(clusterName spec.NamespacedName, status string, numberOfInstances int32, labelSelector string, observedGeneration int64, existingCondition apiacidv1.Conditions, message string) (*apiacidv1.Postgresql, error) {
 	var pg *apiacidv1.Postgresql
 	pgStatus := apiacidv1.PostgresStatus{}
 	pgStatus.PostgresClusterStatus = status
@@ -194,7 +194,7 @@ func (client *KubernetesClient) SetPostgresCRDStatus(clusterName spec.Namespaced
 	pgStatus.LabelSelector = labelSelector
 	pgStatus.ObservedGeneration = observedGeneration
 
-	newConditions := updateConditions(existingCondition, status)
+	newConditions := updateConditions(existingCondition, status, message)
 	pgStatus.Conditions = newConditions
 
 	patch, err := json.Marshal(struct {
@@ -217,11 +217,7 @@ func (client *KubernetesClient) SetPostgresCRDStatus(clusterName spec.Namespaced
 	return pg, nil
 }
 
-<<<<<<< Updated upstream
-func updateConditions(existingConditions apiacidv1.Conditions, currentStatus string) apiacidv1.Conditions {
-=======
 func updateConditions(existingConditions apiacidv1.Conditions, currentStatus string, message string) apiacidv1.Conditions {
->>>>>>> Stashed changes
 	now := apiacidv1.VolatileTime{Inner: metav1.NewTime(time.Now())}
 	var readyCondition, reconciliationCondition *apiacidv1.Condition
 
@@ -235,40 +231,21 @@ func updateConditions(existingConditions apiacidv1.Conditions, currentStatus str
 	}
 
 	// Initialize conditions if not present
-<<<<<<< Updated upstream
-	if readyCondition == nil {
-		existingConditions = append(existingConditions, apiacidv1.Condition{Type: "Ready"})
-		readyCondition = &existingConditions[len(existingConditions)-1]
-	}
-	if reconciliationCondition == nil {
-		existingConditions = append(existingConditions, apiacidv1.Condition{Type: "ReconciliationSuccessful"})
-		reconciliationCondition = &existingConditions[len(existingConditions)-1]
-=======
 	switch currentStatus {
 	case "Creating":
 		if reconciliationCondition == nil {
-			fmt.Println("creating reconciliationCondition when creating")
 			existingConditions = append(existingConditions, apiacidv1.Condition{Type: "ReconciliationSuccessful"})
 			reconciliationCondition = &existingConditions[len(existingConditions)-1]
-
 		}
 	default:
 		if readyCondition == nil {
-			fmt.Println("creating readyCondition when case is default")
 			existingConditions = append(existingConditions, apiacidv1.Condition{Type: "Ready"})
 			readyCondition = &existingConditions[len(existingConditions)-1]
 		}
->>>>>>> Stashed changes
 	}
 
 	// Update Ready condition
 	switch currentStatus {
-<<<<<<< Updated upstream
-	case "Creating":
-		readyCondition.Status = v1.ConditionFalse
-		readyCondition.LastTransitionTime = now
-=======
->>>>>>> Stashed changes
 	case "Running":
 		readyCondition.Status = v1.ConditionTrue
 		readyCondition.LastTransitionTime = now
@@ -290,20 +267,22 @@ func updateConditions(existingConditions apiacidv1.Conditions, currentStatus str
 
 	// Update ReconciliationSuccessful condition
 	reconciliationCondition.LastTransitionTime = now
+	reconciliationCondition.Message = message
 	if currentStatus == "Running" {
 		reconciliationCondition.Status = v1.ConditionTrue
-<<<<<<< Updated upstream
-		reconciliationCondition.Message = ""
-	} else {
-		reconciliationCondition.Status = v1.ConditionFalse
-		reconciliationCondition.Reason = currentStatus
-		reconciliationCondition.Message = "with the error"
-=======
 		reconciliationCondition.Reason = ""
 	} else {
 		reconciliationCondition.Status = v1.ConditionFalse
 		reconciliationCondition.Reason = currentStatus
->>>>>>> Stashed changes
+	}
+
+	// Directly modify elements in the existingConditions slice
+	for i := range existingConditions {
+		if existingConditions[i].Type == "Ready" && readyCondition != nil {
+			existingConditions[i] = *readyCondition
+		} else if existingConditions[i].Type == "ReconciliationSuccessful" && reconciliationCondition != nil {
+			existingConditions[i] = *reconciliationCondition
+		}
 	}
 
 	return existingConditions
