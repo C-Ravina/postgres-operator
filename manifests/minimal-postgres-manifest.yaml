@@ -1,10 +1,9 @@
 apiVersion: "acid.zalan.do/v1"
 kind: postgresql
 metadata:
-  name: postgres-two
-  namespace: keda
+  name: acid-minimal-cluster
   labels:
-    cluster-name: postgres-two
+    cluster-name: acid-minimal-cluster
 spec:
   teamId: "acid"
   volume:
@@ -20,4 +19,4 @@ spec:
   preparedDatabases:
     bar: {}
   postgresql:
-    version: "15"
+    version: "16"
