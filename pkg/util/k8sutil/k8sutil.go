@@ -278,6 +278,14 @@ func updateConditions(existingConditions apiacidv1.Conditions, currentStatus str
 		reconciliationCondition.Status = v1.ConditionFalse
 		reconciliationCondition.Reason = currentStatus
 	}
+	// Directly modify elements in the existingConditions slice
+	for i := range existingConditions {
+		if existingConditions[i].Type == "Ready" && readyCondition != nil {
+			existingConditions[i] = *readyCondition
+		} else if existingConditions[i].Type == "ReconciliationSuccessful" && reconciliationCondition != nil {
+			existingConditions[i] = *reconciliationCondition
+		}
+	}
 
 	return existingConditions
 }
