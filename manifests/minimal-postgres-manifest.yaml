@@ -1,10 +1,10 @@
 apiVersion: "acid.zalan.do/v1"
 kind: postgresql
 metadata:
-  name: postgres-two
+  name: postgres-three
   namespace: keda
   labels:
-    cluster-name: postgres-two
+    cluster-name: postgres-three
 spec:
   teamId: "acid"
   volume:
